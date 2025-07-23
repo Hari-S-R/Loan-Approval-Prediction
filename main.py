@@ -2,14 +2,14 @@ import pandas as pd
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import accuracy_score, classification_report
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import streamlit as st
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # Load the dataset
 data = pd.read_csv("LoanApprovalPrediction.csv")
-print(data.head(5))
 
-# Dropping Loan_ID column
 data.drop(['Loan_ID'],axis=1,inplace=True)
 
 label_encoder={}
@@ -18,7 +18,7 @@ for i in ['Gender', 'Married', 'Education', 'Self_Employed', 'Property_Area', 'L
       data[i] = le.fit_transform(data[i])
       label_encoder[i] = le
 
-# Find out and fill the missing values
+# Find and fill the missing values
 for i in data.columns:
   data[i] = data[i].fillna(data[i].mean()) 
   
@@ -41,8 +41,7 @@ y_pred = model.predict(X_test)
 # Evaluate the model
 acc = accuracy_score(y_test, y_pred)
 cr = classification_report(y_test, y_pred)
-print("Accuracy:", acc*100)
-print("\nClassification Report:\n", cr)
+cm = confusion_matrix(y_test, y_pred)
 
 # Predict for a new applicant
 sample = [[1, 1, 0, 0, 0, 5000, 0.0, 128, 360.0, 1.0, 2]]  # dummy values
@@ -52,6 +51,21 @@ print("\nPrediction for new applicant:", "Loan Approved" if prediction == 1 else
 # Streamlit code
 # Title
 st.title("Loan Approval Prediction App")
+
+# Sidebar content
+st.sidebar.header("📊 Model Evaluation")
+
+# Show classification report in sidebar
+st.sidebar.subheader("🔍 Classification Report")
+st.sidebar.text(cr)
+
+# Confusion matrix plot
+st.sidebar.subheader("📈 Confusion Matrix")
+fig, ax = plt.subplots()
+sns.heatmap(cm, annot=True, fmt="d", cmap="Blues", xticklabels=["Rejected", "Approved"], yticklabels=["Rejected", "Approved"])
+plt.xlabel("Predicted")
+plt.ylabel("Actual")
+st.sidebar.pyplot(fig)
 
 # User input form
 st.header("📋 Enter Applicant Details:")
